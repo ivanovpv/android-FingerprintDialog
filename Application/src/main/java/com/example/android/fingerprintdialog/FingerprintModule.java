@@ -16,12 +16,16 @@
 
 package com.example.android.fingerprintdialog;
 
+import android.annotation.TargetApi;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.hardware.fingerprint.FingerprintManager;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.security.keystore.KeyProperties;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.hardware.fingerprint.FingerprintManagerCompat;
 import android.view.inputmethod.InputMethodManager;
 
 import java.security.KeyStore;
@@ -57,13 +61,13 @@ public class FingerprintModule {
     }
 
     @Provides
-    public FingerprintManager providesFingerprintManager(Context context) {
-        return context.getSystemService(FingerprintManager.class);
+    public FingerprintManagerCompat providesFingerprintManager(Context context) {
+        return FingerprintManagerCompat.from(context);
     }
 
     @Provides
     public KeyguardManager providesKeyguardManager(Context context) {
-        return context.getSystemService(KeyguardManager.class);
+        return (KeyguardManager )context.getSystemService(Context.KEYGUARD_SERVICE);
     }
 
     @Provides

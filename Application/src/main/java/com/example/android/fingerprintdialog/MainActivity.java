@@ -16,14 +16,17 @@
 
 package com.example.android.fingerprintdialog;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.KeyguardManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.hardware.fingerprint.FingerprintManager;
+
+import android.os.Build;
+import android.support.v4.hardware.fingerprint.FingerprintManagerCompat;
 import android.os.Bundle;
 import android.security.keystore.KeyGenParameterSpec;
-import android.security.keystore.KeyPermanentlyInvalidatedException;
+//import android.security.keystore.KeyPermanentlyInvalidatedException;
 import android.security.keystore.KeyProperties;
 import android.util.Base64;
 import android.util.Log;
@@ -63,7 +66,7 @@ public class MainActivity extends Activity {
     private static final String KEY_NAME = "my_key";
 
     @Inject KeyguardManager mKeyguardManager;
-    @Inject FingerprintManager mFingerprintManager;
+    @Inject FingerprintManagerCompat mFingerprintManager;
     @Inject FingerprintAuthenticationDialogFragment mFragment;
     @Inject KeyStore mKeyStore;
     @Inject KeyGenerator mKeyGenerator;
@@ -110,7 +113,7 @@ public class MainActivity extends Activity {
 
                     // Show the fingerprint dialog. The user has the option to use the fingerprint with
                     // crypto, or you can fall back to using a server-side verified password.
-                    mFragment.setCryptoObject(new FingerprintManager.CryptoObject(mCipher));
+                    mFragment.setCryptoObject(new FingerprintManagerCompat.CryptoObject(mCipher));
                     boolean useFingerprintPreference = mSharedPreferences
                             .getBoolean(getString(R.string.use_fingerprint_to_authenticate_key),
                                     true);
@@ -127,7 +130,7 @@ public class MainActivity extends Activity {
                     // enrolled. Thus show the dialog to authenticate with their password first
                     // and ask the user if they want to authenticate with fingerprints in the
                     // future
-                    mFragment.setCryptoObject(new FingerprintManager.CryptoObject(mCipher));
+                    mFragment.setCryptoObject(new FingerprintManagerCompat.CryptoObject(mCipher));
                     mFragment.setStage(
                             FingerprintAuthenticationDialogFragment.Stage.NEW_FINGERPRINT_ENROLLED);
                     mFragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
@@ -144,17 +147,21 @@ public class MainActivity extends Activity {
      * been disabled or reset after the key was generated, or if a fingerprint got enrolled after
      * the key was generated.
      */
+    @TargetApi(Build.VERSION_CODES.M)
     private boolean initCipher() {
         try {
             mKeyStore.load(null);
             SecretKey key = (SecretKey) mKeyStore.getKey(KEY_NAME, null);
             mCipher.init(Cipher.ENCRYPT_MODE, key);
             return true;
-        } catch (KeyPermanentlyInvalidatedException e) {
+        } /*catch (Exception e) {
             return false;
-        } catch (KeyStoreException | CertificateException | UnrecoverableKeyException | IOException
+        } */catch (KeyStoreException | CertificateException | UnrecoverableKeyException | IOException
                 | NoSuchAlgorithmException | InvalidKeyException e) {
             throw new RuntimeException("Failed to init Cipher", e);
+        }
+        catch(Exception ex) {
+            return false;
         }
     }
 
@@ -198,6 +205,7 @@ public class MainActivity extends Activity {
      * Creates a symmetric key in the Android Key Store which can only be used after the user has
      * authenticated with fingerprint.
      */
+    @TargetApi(Build.VERSION_CODES.M)
     public void createKey() {
         // The enrolling flow for fingerprint. This is where you ask the user to set up fingerprint
         // for your flow. Use of keys is necessary if you need to know if the set of
